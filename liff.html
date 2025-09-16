@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>LINE 商品洽詢 LIFF</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+
+<body>
+    <h2>正在發送商品洽詢訊息...</h2>
+    <script>
+        // 取得網址參數
+        function getQueryParam(name) {
+            const url = new URL(window.location.href);
+            return url.searchParams.get(name) || '';
+        }
+        const product = getQueryParam('product') || '未知商品';
+
+        // 初始化 LIFF
+        liff.init({ liffId: "2008115455-rgy2kjaA" })
+            .then(() => {
+                // 檢查是否在 LINE App 內
+                if (!liff.isInClient()) {
+                    document.body.innerHTML = "<h2>請用 LINE App 開啟本頁面</h2>";
+                    return;
+                }
+                // 發送訊息
+                liff.sendMessages([
+                    {
+                        type: "text",
+                        text: `你好，我想詢問商品「${product}」的今日價格與庫存狀況。`
+                    }
+                ]).then(() => {
+                    document.body.innerHTML = "<h2>已發送訊息，請回到聊天室！</h2>";
+                    setTimeout(() => liff.closeWindow(), 1500);
+                }).catch(err => {
+                    document.body.innerHTML = "<h2>發送失敗：" + err.message + "</h2>";
+                });
+            })
+            .catch(err => {
+                document.body.innerHTML = "<h2>LIFF 初始化失敗：" + err.message + "</h2>";
+            });
+    </script>
+</body>
+
+</html>

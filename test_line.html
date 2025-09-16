@@ -402,10 +402,9 @@
         // 動態生成商品卡片
         const productGrid = document.getElementById('product-grid');
         products.forEach((product, index) => {
-            const message = `你好，我想詢問商品「${product.name}」的今日價格與庫存狀況。`;
-            const encodedMessage = encodeURIComponent(message);
-            const lineUrl = `https://line.me/R/oaMessage/${lineOfficialAccountId}/?${encodedMessage}`;
-            const qrCodeUrl = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(lineUrl)}`;
+            // 改為 LIFF URL 並帶產品名稱參數
+            const liffUrl = `https://liff.line.me/2008115455-rgy2kjaA?product=${encodeURIComponent(product.name)}`;
+            const qrCodeUrl = liffUrl;
             const imageUrl = imageUrls[index];
 
             const card = document.createElement('div');
@@ -416,7 +415,7 @@
                     <h3 class="product-name">${product.name}</h3>
                     <p class="product-store">${product.store}</p>
                     <div class="product-action">
-                        <a href="#" class="btn" data-line-url="${lineUrl}" data-qrcode-url="${qrCodeUrl}">
+                        <a href="#" class="btn" data-line-url="${liffUrl}" data-qrcode-url="${qrCodeUrl}">
                             <span class="btn-icon"></span>LINE@ 詢問此商品
                         </a>
                     </div>
