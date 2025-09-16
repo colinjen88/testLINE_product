@@ -426,22 +426,85 @@
 
             const card = document.createElement('div');
             card.className = 'product-card';
-            card.innerHTML = `
-                <img class="product-image" src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="this.style.display='none'">
-                <div class="product-info">
-                    <h3 class="product-name">${product.name}</h3>
-                    <p class="product-store">${product.store}</p>
-                    <div class="product-action">
-                        <a href="${lineUrl}" class="btn" target="_blank">
-                            <span class="btn-icon"></span>LINE@ 詢問此商品
-                        </a>
-                    </div>
-                </div>
-            `;
+
+            // 建立圖片元素
+            const img = document.createElement('img');
+            img.className = 'product-image';
+            img.src = imageUrl;
+            img.alt = product.name;
+            img.loading = 'lazy';
+            img.onerror = function () { this.style.display = 'none'; };
+
+            // 建立商品資訊容器
+            const productInfo = document.createElement('div');
+            productInfo.className = 'product-info';
+
+            // 建立商品名稱
+            const productName = document.createElement('h3');
+            productName.className = 'product-name';
+            productName.textContent = product.name;
+
+            // 建立品牌資訊
+            const productStore = document.createElement('p');
+            productStore.className = 'product-store';
+            productStore.textContent = product.store;
+
+            // 建立按鈕容器
+            const productAction = document.createElement('div');
+            productAction.className = 'product-action';
+
+            // 建立按鈕
+            const btn = document.createElement('a');
+            btn.href = '#';
+            btn.className = 'btn';
+            btn.setAttribute('data-line-url', lineUrl);
+            btn.setAttribute('data-qrcode-url', qrCodeUrl);
+
+            // 建立按鈕圖標
+            const btnIcon = document.createElement('span');
+            btnIcon.className = 'btn-icon';
+
+            // 建立按鈕文字
+            const btnText = document.createTextNode('LINE@ 詢問此商品');
+
+            // 組裝按鈕
+            btn.appendChild(btnIcon);
+            btn.appendChild(btnText);
+
+            // 組裝商品資訊
+            productInfo.appendChild(productName);
+            productInfo.appendChild(productStore);
+            productInfo.appendChild(productAction);
+            productAction.appendChild(btn);
+
+            // 組裝卡片
+            card.appendChild(img);
+            card.appendChild(productInfo);
+
             productGrid.appendChild(card);
         });
 
-        // 按鈕現在直接連結到LINE URL，不需要額外的點擊事件處理
+        // 綁定所有洽詢按鈕的點擊事件
+        document.querySelectorAll('.product-action .btn').forEach(button => {
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+                const lineUrl = this.dataset.lineUrl;
+                const qrCodeUrl = this.dataset.qrcodeUrl;
+
+                // 檢查是否在LINE App內
+                if (isInLineApp()) {
+                    // 在LINE App內，直接開啟官方帳號聊天
+                    window.location.href = lineUrl;
+                } else if (isMobileDevice()) {
+                    // 手機但不在LINE App內，嘗試開啟LINE App
+                    const lineAppUrl = lineUrl.replace('https://line.me/R/ti/p/', 'line://ti/p/');
+                    window.location.href = lineAppUrl;
+                } else {
+                    // 電腦版，顯示QR Code
+                    showModal(qrCodeUrl);
+                }
+            });
+        });
 
         // --- Sidebar & Modal 的 JS 控制 ---
         const sidebar = document.getElementById('sidebar');
