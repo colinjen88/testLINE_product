@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炫麗鑫 - 商品洽詢 DEMO (V4.1 - 串接正式LINE@)</title>
+    <!-- 加入 qrious 套件 for 本地 QR Code 產生 -->
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <style>
+        /* --- 基本樣式 --- */
+        :root {
+            --brand-gold: #c59d5f;
+            --line-green: #00B900;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* --- Header & Menu --- */
+        .header {
+            background-color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            margin-right: 15px;
+        }
+
+        .menu-btn .icon-bar {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background-color: #333;
+            margin: 4px 0;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            color: var(--brand-gold);
+            margin: 0;
+        }
+
+        /* --- 左側滑出選單 (Sidebar) --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100%;
+            background-color: #fff;
+            z-index: 1001;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .close-sidebar-btn {
+            font-size: 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .filter-group h3 {
+            font-size: 16px;
+            margin: 20px 0 10px 0;
+            color: #555;
+        }
+
+        .filter-group ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .filter-group ul li a {
+            display: block;
+            padding: 8px 0;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .filter-group ul li a:hover {
+            color: var(--brand-gold);
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        /* --- 商品格狀排版 --- */
+        .main-content {
+            padding: 30px 0;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        /* --- 商品卡片樣式 --- */
+        .product-card {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background-color: #eee;
+        }
+
+        .product-info {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            flex-grow: 1;
+        }
+
+        .product-store {
+            font-size: 14px;
+            color: #777;
+            margin: 0 0 15px 0;
+        }
+
+        .product-action .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--line-green);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .product-action .btn:hover {
+            background-color: #009a00;
+        }
+
+        .product-action .btn-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin-right: 8px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" fill="white"><path d="M496 256c0 137-111 248-248 248-25.6 0-50.2-3.9-73.4-11.1C164 485.6 153.3 480 142.2 480H96.3c-11.8 0-22.9-5.1-30.7-13.9C52 452.9 48 440.3 48 427.5V384c0-11.8 5.1-22.9 13.9-30.7 13.9-12.5 32.3-13.1 47.3-1.7 20.3 15.6 44.5 24.4 70.5 24.4 105.9 0 192-86.1 192-192S313.9 64 208 64 16 150.1 16 256c0 48.2 17.8 92.4 46.9 126.3 12.1 13.9 10.9 34.9-3.3 47.1-13.1 11.2-32.5 10.3-44.6-2.5C21.5 398.2 0 329.8 0 256 0 114.6 114.6 0 256 0s256 114.6 256 256zM152 224c-13.3 0-24-10.7-24-24s10.7-24 24-24 24 10.7 24 24-10.7 24-24 24zm104-24c0 13.3-10.7 24-24 24s-24-10.7-24-24 10.7-24 24-24 24 10.7 24 24z"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        /* --- Modal (QR Code 彈出視窗) 樣式 --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1002;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 350px;
+            border-radius: 10px;
+            text-align: center;
+            animation: fadeIn 0.3s;
+            position: relative;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+        }
+
+        .modal-content p {
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        #modal-qrcode {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            margin: 0 auto;
+        }
+
+        .close-btn {
+            color: #aaa;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+</head>
+
+<body>
+
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h2>篩選商品</h2>
+            <button id="close-sidebar-btn" class="close-sidebar-btn">&times;</button>
+        </div>
+        <div class="filter-group">
+            <h3>商品分類</h3>
+            <ul>
+                <li><a href="#">所有商品</a></li>
+                <li><a href="#">黃金系列</a></li>
+                <li><a href="#">白銀系列</a></li>
+                <li><a href="#">鉑金系列</a></li>
+                <li><a href="#">金條/金幣</a></li>
+                <li><a href="#">戒指/耳環</a></li>
+                <li><a href="#">項鍊/墜飾</a></li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h3>推薦品牌</h3>
+            <ul>
+                <li><a href="#">周大福</a></li>
+                <li><a href="#">點睛品</a></li>
+                <li><a href="#">Just Gold 鎮金店</a></li>
+                <li><a href="#">J'code 真愛密碼</a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="overlay" class="overlay"></div>
+
+    <header class="header">
+        <button id="menu-btn" class="menu-btn">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <h1>炫麗鑫貴金屬</h1>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="product-grid" id="product-grid">
+            </div>
+        </div>
+    </main>
+
+    <div id="qrcode-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h3>電腦版用戶請掃描</h3>
+            <p>請使用手機 LINE App 掃描下方的 QR Code，即可開始專人洽詢。</p>
+            <canvas id="modal-qrcode" width="300" height="300"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // --- 擴充至16筆假資料 ---
+        const products = [
+            { name: "周大福 小蠻腰黃金耳環", store: "周大福" },
+            { name: "Just Gold Kitty 蝴蝶結黃金戒指", store: "Just Gold 鎮金店" },
+            { name: "點睛品 g*collection 5G黃金手鍊", store: "點睛品" },
+            { name: "真愛密碼 卡娜赫拉的小動物 黃金墜", store: "J'code 真愛密碼" },
+            { name: "經典龍鳳黃金手鐲", store: "炫麗鑫" },
+            { name: "彌月金鎖片禮盒", store: "周生生" },
+            { name: "瑞士PAMP財富女神金條 5公克", store: "PAMP Suisse" },
+            { name: "加拿大楓葉金幣 1/4盎司", store: "Royal Canadian Mint" },
+            { name: "簡約圓珠黃金耳釘", store: "點睛品" },
+            { name: "愛心串珠黃金手鍊", store: "Just Gold 鎮金店" },
+            { name: "貔貅開運黃金戒指 (男戒)", store: "炫麗鑫" },
+            { name: "幸運四葉草黃金項鍊", store: "周大福" },
+            { name: "迪士尼維尼純金墜飾", store: "J'code 真愛密碼" },
+            { name: "光沙金球黃金耳環", store: "點睛品" },
+            { name: "麻花鍊黃金項鍊 2錢", store: "炫麗鑫" },
+            { name: "福字黃金元寶擺件", store: "周大福" },
+        ];
+
+        // --- 使用者提供的真實圖片網址 ---
+        const imageUrls = [
+            'https://shoplineimg.com/58ddc01859d524174d0001ef/6008426896e03c001d76022c/800x.jpg?',
+            'https://www.ccsj.com.tw/files/20220826114956361.jpg',
+            'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTFnOKYZ1niAC-5rUD2Povr9TP9Mv2iMOCRztgSzYKGrfKxAlFoqO9XforAxeg-Ry54joSsYJdWPchqBLlILiLn5AxdvjkVXJNtp1HmmbEeksotAZFPWlQE',
+            'https://cdn-next.cybassets.com/s/files/26842/ckeditor/pictures/content_29e0f943-8a7d-4aa0-962f-e533ec81fb62.jpg',
+            'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRZQ4ol5s1R_PonILo17mWRDEj7vw0vMkKlgIbe4nJSYVx8cyQOGhG396G6HDtrPKcpeseb-U5M0R_2wEmvjgmkZ4oPkbvRYQ',
+            'https://shoplineimg.com/58ddc01859d524174d0001ef/6008426896e03c001d76022c/800x.jpg?',
+            'https://cdn-next.cybassets.com/s/files/26842/ckeditor/pictures/content_29e0f943-8a7d-4aa0-962f-e533ec81fb62.jpg',
+            'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRZQ4ol5s1R_PonILo17mWRDEj7vw0vMkKlgIbe4nJSYVx8cyQOGhG396G6HDtrPKcpeseb-U5M0R_2wEmvjgmkZ4oPkbvRYQ',
+            'https://cdn-next.cybassets.com/s/files/26842/ckeditor/pictures/content_29e0f943-8a7d-4aa0-962f-e533ec81fb62.jpg',
+            'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTFnOKYZ1niAC-5rUD2Povr9TP9Mv2iMOCRztgSzYKGrfKxAlFoqO9XforAxeg-Ry54joSsYJdWPchqBLlILiLn5AxdvjkVXJNtp1HmmbEeksotAZFPWlQE',
+            'https://www.ccsj.com.tw/files/20220826114956361.jpg',
+            'https://shoplineimg.com/58ddc01859d524174d0001ef/6008426896e03c001d76022c/800x.jpg?',
+            'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTFnOKYZ1niAC-5rUD2Povr9TP9Mv2iMOCRztgSzYKGrfKxAlFoqO9XforAxeg-Ry54joSsYJdWPchqBLlILiLn5AxdvjkVXJNtp1HmmbEeksotAZFPWlQE',
+            'https://www.ccsj.com.tw/files/20220826114956361.jpg',
+            'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTFnOKYZ1niAC-5rUD2Povr9TP9Mv2iMOCRztgSzYKGrfKxAlFoqO9XforAxeg-Ry54joSsYJdWPchqBLlILiLn5AxdvjkVXJNtp1HmmbEeksotAZFPWlQE',
+            'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRZQ4ol5s1R_PonILo17mWRDEj7vw0vMkKlgIbe4nJSYVx8cyQOGhG396G6HDtrPKcpeseb-U5M0R_2wEmvjgmkZ4oPkbvRYQ'
+        ];
+
+        // --- 核心功能 ---
+        // =================================================================
+        //   *** 已更新為您指定的 LINE@ 官方帳號 ID ***
+        // =================================================================
+        const lineOfficialAccountId = "@789wsphd";
+
+        // 動態生成商品卡片
+        const productGrid = document.getElementById('product-grid');
+        products.forEach((product, index) => {
+            const message = `你好，我想詢問商品「${product.name}」的今日價格與庫存狀況。`;
+            const encodedMessage = encodeURIComponent(message);
+            const lineUrl = `https://line.me/R/oaMessage/${lineOfficialAccountId}/?${encodedMessage}`;
+            const qrCodeUrl = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(lineUrl)}`;
+            const imageUrl = imageUrls[index];
+
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <img class="product-image" src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="this.style.display='none'">
+                <div class="product-info">
+                    <h3 class="product-name">${product.name}</h3>
+                    <p class="product-store">${product.store}</p>
+                    <div class="product-action">
+                        <a href="#" class="btn" data-line-url="${lineUrl}" data-qrcode-url="${qrCodeUrl}">
+                            <span class="btn-icon"></span>LINE@ 詢問此商品
+                        </a>
+                    </div>
+                </div>
+            `;
+            productGrid.appendChild(card);
+        });
+
+        // 綁定所有洽詢按鈕的點擊事件
+        document.querySelectorAll('.product-action .btn').forEach(button => {
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+                const lineUrl = this.dataset.lineUrl;
+                const qrCodeUrl = this.dataset.qrcodeUrl;
+                if (isMobileDevice()) {
+                    window.location.href = lineUrl;
+                } else {
+                    showModal(qrCodeUrl);
+                }
+            });
+        });
+
+        // --- Sidebar & Modal 的 JS 控制 ---
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuBtn = document.getElementById('menu-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            overlay.classList.add('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+        }
+
+        menuBtn.addEventListener('click', openSidebar);
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+
+        // --- Helper Functions ---
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        const modal = document.getElementById('qrcode-modal');
+        const modalQrCode = document.getElementById('modal-qrcode');
+        let qr;
+        function showModal(qrCodeUrl) {
+            // qrCodeUrl 其實是 lineUrl
+            let lineUrl = qrCodeUrl;
+            // 若傳進來的是 Google Chart API 連結，需還原 lineUrl
+            if (qrCodeUrl.includes('chart.googleapis.com')) {
+                const urlParams = new URLSearchParams(qrCodeUrl.split('?')[1]);
+                lineUrl = decodeURIComponent(urlParams.get('chl'));
+            }
+            if (!qr) {
+                qr = new QRious({
+                    element: modalQrCode,
+                    size: 300,
+                    value: lineUrl
+                });
+            } else {
+                qr.value = lineUrl;
+            }
+            modal.style.display = 'flex';
+            modal.offsetHeight;
+            modal.focus && modal.focus();
+        }
+        function closeModal() {
+            modal.style.display = 'none';
+            if (qr) qr.value = '';
+        }
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+
+</html>
