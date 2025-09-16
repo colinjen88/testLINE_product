@@ -402,8 +402,16 @@
         // 動態生成商品卡片
         const productGrid = document.getElementById('product-grid');
         products.forEach((product, index) => {
-            // 改為 LIFF URL 並帶產品名稱參數
-            const liffUrl = `https://liff.line.me/2008115455-rgy2kjaA?product=${encodeURIComponent(product.name)}`;
+            // 建立完整的商品資訊物件
+            const productInfo = {
+                name: product.name,
+                store: product.store,
+                index: index + 1
+            };
+
+            // 將商品資訊編碼為 JSON 字串
+            const productData = encodeURIComponent(JSON.stringify(productInfo));
+            const liffUrl = `https://liff.line.me/2008115455-rgy2kjaA?product=${productData}`;
             const qrCodeUrl = liffUrl;
             const imageUrl = imageUrls[index];
 

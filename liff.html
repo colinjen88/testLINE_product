@@ -15,7 +15,26 @@
             const url = new URL(window.location.href);
             return url.searchParams.get(name) || '';
         }
-        const product = getQueryParam('product') || '未知商品';
+
+        // 解析商品資料
+        function parseProductData() {
+            const productParam = getQueryParam('product');
+            if (!productParam) {
+                return { name: '未知商品', store: '未知品牌', index: 0 };
+            }
+
+            try {
+                // 嘗試解析 JSON 格式的商品資料
+                const productData = JSON.parse(decodeURIComponent(productParam));
+                return productData;
+            } catch (error) {
+                // 如果解析失敗，可能是舊格式的單一商品名稱
+                console.warn('無法解析商品資料，使用舊格式:', error);
+                return { name: productParam, store: '未知品牌', index: 0 };
+            }
+        }
+
+        const productInfo = parseProductData();
 
         // 初始化 LIFF
         liff.init({ liffId: "2008115455-rgy2kjaA" })
@@ -26,10 +45,18 @@
                     return;
                 }
                 // 發送訊息
+                const messageText = `你好，我想詢問商品資訊：
+
+📦 商品名稱：${productInfo.name}
+🏪 品牌：${productInfo.store}
+🆔 商品編號：${productInfo.index}
+
+請提供此商品的今日價格與庫存狀況，謝謝！`;
+
                 liff.sendMessages([
                     {
                         type: "text",
-                        text: `你好，我想詢問商品「${product}」的今日價格與庫存狀況。`
+                        text: messageText
                     }
                 ]).then(() => {
                     document.body.innerHTML = "<h2>已發送訊息，請回到聊天室！</h2>";
