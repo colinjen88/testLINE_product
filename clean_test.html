@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炫麗鑫 - 商品洽詢 DEMO (修復版)</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background-color: #eee;
+        }
+
+        .product-info {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            flex-grow: 1;
+        }
+
+        .product-store {
+            font-size: 14px;
+            color: #777;
+            margin: 0 0 15px 0;
+        }
+
+        .product-action .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #00B900;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .product-action .btn:hover {
+            background-color: #009a00;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>炫麗鑫貴金屬</h1>
+        <div class="product-grid" id="product-grid"></div>
+    </div>
+
+    <script>
+        // 商品資料
+        const products = [
+            { name: "周大福 小蠻腰黃金耳環", store: "周大福" },
+            { name: "Just Gold Kitty 蝴蝶結黃金戒指", store: "Just Gold 鎮金店" },
+            { name: "點睛品 g*collection 5G黃金手鍊", store: "點睛品" },
+            { name: "真愛密碼 卡娜赫拉的小動物 黃金墜", store: "J'code 真愛密碼" },
+            { name: "經典龍鳳黃金手鐲", store: "炫麗鑫" },
+            { name: "彌月金鎖片禮盒", store: "周生生" }
+        ];
+
+        // 圖片網址
+        const imageUrls = [
+            'https://shoplineimg.com/58ddc01859d524174d0001ef/6008426896e03c001d76022c/800x.jpg?',
+            'https://www.ccsj.com.tw/files/20220826114956361.jpg',
+            'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTFnOKYZ1niAC-5rUD2Povr9TP9Mv2iMOCRztgSzYKGrfKxAlFoqO9XforAxeg-Ry54joSsYJdWPchqBLlILiLn5AxdvjkVXJNtp1HmmbEeksotAZFPWlQE',
+            'https://cdn-next.cybassets.com/s/files/26842/ckeditor/pictures/content_29e0f943-8a7d-4aa0-962f-e533ec81fb62.jpg',
+            'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRZQ4ol5s1R_PonILo17mWRDEj7vw0vMkKlgIbe4nJSYVx8cyQOGhG396G6HDtrPKcpeseb-U5M0R_2wEmvjgmkZ4oPkbvRYQ',
+            'https://shoplineimg.com/58ddc01859d524174d0001ef/6008426896e03c001d76022c/800x.jpg?'
+        ];
+
+        // LINE官方帳號ID
+        const lineOfficialAccountId = "@789wsphd";
+
+        // 動態生成商品卡片
+        const productGrid = document.getElementById('product-grid');
+
+        products.forEach((product, index) => {
+            // 建立要發送的訊息內容
+            const messageText = `你好，我想詢問商品資訊：
+
+📦 商品名稱：${product.name}
+🏪 品牌：${product.store}
+🆔 商品編號：${index + 1}
+
+請提供此商品的今日價格與庫存狀況，謝謝！`;
+
+            // 使用LINE官方帳號的深度連結格式
+            const encodedMessage = encodeURIComponent(messageText);
+            const lineUrl = `https://line.me/R/ti/p/${lineOfficialAccountId}?text=${encodedMessage}`;
+            const imageUrl = imageUrls[index] || 'https://via.placeholder.com/300x200?text=商品圖片';
+
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <img class="product-image" src="${imageUrl}" alt="${product.name}" loading="lazy" onerror="this.style.display='none'">
+                <div class="product-info">
+                    <h3 class="product-name">${product.name}</h3>
+                    <p class="product-store">${product.store}</p>
+                    <div class="product-action">
+                        <a href="${lineUrl}" class="btn" target="_blank">
+                            LINE@ 詢問此商品
+                        </a>
+                    </div>
+                </div>
+            `;
+            productGrid.appendChild(card);
+        });
+    </script>
+</body>
+
+</html>

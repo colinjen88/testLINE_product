@@ -397,6 +397,7 @@
         // =================================================================
         //   *** 已更新為您指定的 LINE@ 官方帳號 ID ***
         // =================================================================
+        const lineOfficialAccountId = "@789wsphd";
 
         // 動態生成商品卡片
         const productGrid = document.getElementById('product-grid');
@@ -418,7 +419,6 @@
 請提供此商品的今日價格與庫存狀況，謝謝！`;
 
             // 使用LINE官方帳號的深度連結格式
-            const lineOfficialAccountId = "@789wsphd";
             const encodedMessage = encodeURIComponent(messageText);
             const lineUrl = `https://line.me/R/ti/p/${lineOfficialAccountId}?text=${encodedMessage}`;
             const qrCodeUrl = lineUrl;
@@ -432,7 +432,7 @@
                     <h3 class="product-name">${product.name}</h3>
                     <p class="product-store">${product.store}</p>
                     <div class="product-action">
-                        <a href="#" class="btn" data-line-url="${liffUrl}" data-qrcode-url="${qrCodeUrl}">
+                        <a href="#" class="btn" data-line-url="${lineUrl}" data-qrcode-url="${qrCodeUrl}">
                             <span class="btn-icon"></span>LINE@ 詢問此商品
                         </a>
                     </div>
